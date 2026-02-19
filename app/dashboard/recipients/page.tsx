@@ -95,16 +95,18 @@ export default function RecipientsPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
-        const { error } = await supabase.from('recipients').insert([
+        const { data, error } = await supabase.from('recipients').insert([
             {
                 user_id: user.id,
                 name,
                 amount: parseFloat(amount),
                 category,
             },
-        ])
+        ]).select()
 
-        if (!error) {
+        if (!error && data) {
+            // Updated to use functional update to avoid stale state
+            setRecipients((prev) => [data[0] as Recipient, ...prev])
             setName('')
             setAmount('')
             setCategory('Family') // Reset to default
@@ -113,7 +115,11 @@ export default function RecipientsPage() {
     }
 
     const handleDelete = async (id: string) => {
-        await supabase.from('recipients').delete().eq('id', id)
+        const { error } = await supabase.from('recipients').delete().eq('id', id)
+        if (!error) {
+            // Updated to use functional update to avoid stale state
+            setRecipients((prev) => prev.filter(r => r.id !== id))
+        }
     }
 
     // Calculations

@@ -1,16 +1,14 @@
 
 import Link from "next/link"
 import {
-    Home,
-    LineChart,
     Menu,
     Package2,
-    Users,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { UserNav } from "@/app/dashboard/components/user-nav"
+import { DashboardLinks } from "@/app/dashboard/components/dashboard-links"
 
 export default function DashboardLayout({
     children,
@@ -28,29 +26,7 @@ export default function DashboardLayout({
                         </Link>
                     </div>
                     <div className="flex-1">
-                        <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-                            <Link
-                                href="/dashboard"
-                                className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2 text-primary transition-all hover:text-primary"
-                            >
-                                <Home className="h-4 w-4" />
-                                Dashboard
-                            </Link>
-                            <Link
-                                href="/dashboard/recipients"
-                                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                            >
-                                <Users className="h-4 w-4" />
-                                Recipients
-                            </Link>
-                            <Link
-                                href="/dashboard/bank-status"
-                                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                            >
-                                <LineChart className="h-4 w-4" />
-                                Bank Status
-                            </Link>
-                        </nav>
+                        <DashboardLinks className="grid items-start px-2 text-sm font-medium lg:px-4" />
                     </div>
                 </div>
             </div>
@@ -76,27 +52,7 @@ export default function DashboardLayout({
                                     <Package2 className="h-6 w-6" />
                                     <span className="sr-only">SakuRaya</span>
                                 </Link>
-                                <Link
-                                    href="/dashboard"
-                                    className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-                                >
-                                    <Home className="h-5 w-5" />
-                                    Dashboard
-                                </Link>
-                                <Link
-                                    href="/dashboard/recipients"
-                                    className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-                                >
-                                    <Users className="h-5 w-5" />
-                                    Recipients
-                                </Link>
-                                <Link
-                                    href="/dashboard/bank-status"
-                                    className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-                                >
-                                    <LineChart className="h-5 w-5" />
-                                    Bank Status
-                                </Link>
+                                <DashboardLinks className="mt-4" />
                             </nav>
                         </SheetContent>
                     </Sheet>

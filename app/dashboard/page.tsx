@@ -1,4 +1,7 @@
+'use client'
 
+import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
 import {
     Card,
     CardContent,
@@ -6,12 +9,114 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-import { DollarSign, Users, Activity } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Progress } from "@/components/ui/progress"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { DollarSign, Users, Activity, Save, Banknote } from "lucide-react"
+import { calculateTotalBreakdown, type CashDenomination } from "@/lib/cash-breakdown"
+
+type Recipient = {
+    id: string
+    amount: number
+    created_at: string
+}
 
 export default function DashboardPage() {
+    const supabase = createClient()
+    const [loading, setLoading] = useState(true)
+    const [recipients, setRecipients] = useState<Recipient[]>([])
+    const [totalBudget, setTotalBudget] = useState(0)
+    const [budgetInput, setBudgetInput] = useState("")
+    const [breakdown, setBreakdown] = useState<CashDenomination[]>([])
+    const [isEditingBudget, setIsEditingBudget] = useState(false)
+
+    const fetchData = async () => {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        // Fetch recipients
+        const { data: recipientsData } = await supabase
+            .from('recipients')
+            .select('id, amount, created_at')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+
+        if (recipientsData) {
+            setRecipients(recipientsData)
+            const amounts = recipientsData.map(r => Number(r.amount))
+            setBreakdown(calculateTotalBreakdown(amounts))
+        }
+
+        // Fetch profile budget
+        const { data: profileData } = await supabase
+            .from('profiles')
+            .select('total_budget')
+            .eq('id', user.id)
+            .single()
+
+        if (profileData) {
+            setTotalBudget(profileData.total_budget || 0)
+            setBudgetInput(profileData.total_budget?.toString() || "")
+        } else {
+            // Handle case where profile might not exist yet
+            setTotalBudget(0)
+        }
+
+        setLoading(false)
+    }
+
+    useEffect(() => {
+        fetchData()
+
+        const channel = supabase
+            .channel('dashboard_realtime')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'recipients' },
+                () => fetchData()
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [])
+
+    const handleSaveBudget = async () => {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const amount = parseFloat(budgetInput)
+        if (isNaN(amount)) return
+
+        const { error } = await supabase
+            .from('profiles')
+            .upsert({ id: user.id, total_budget: amount })
+
+        if (!error) {
+            setTotalBudget(amount)
+            setIsEditingBudget(false)
+        }
+    }
+
+    // Calculations
+    const totalAllocated = recipients.reduce((sum, r) => sum + Number(r.amount), 0)
+    const percentUsed = totalBudget > 0 ? (totalAllocated / totalBudget) * 100 : 0
+    const remainingBudget = totalBudget - totalAllocated
+
+    // Progress Bar Color
+    const getProgressColor = (percent: number) => {
+        if (percent >= 100) return "bg-red-500"
+        if (percent >= 75) return "bg-amber-500"
+        return "bg-emerald-500"
+    }
+
     return (
-        <div className="flex flex-col gap-4">
-            <h1 className="text-lg font-semibold md:text-2xl">Dashboard</h1>
+        <div className="flex flex-col gap-6 animate-in fade-in duration-500">
+            <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+
+            {/* Top Stat Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -19,69 +124,114 @@ export default function DashboardPage() {
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">RM 0.00</div>
-                        <p className="text-xs text-muted-foreground">Set your budget to start</p>
+                        {isEditingBudget ? (
+                            <div className="flex items-center gap-2 mt-1">
+                                <Input
+                                    className="h-8"
+                                    value={budgetInput}
+                                    onChange={e => setBudgetInput(e.target.value)}
+                                    type="number"
+                                />
+                                <Button size="sm" onClick={handleSaveBudget}><Save className="h-4 w-4" /></Button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <div className="text-2xl font-bold">RM {totalBudget.toFixed(2)}</div>
+                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setIsEditingBudget(true)}>
+                                    <span className="sr-only">Edit</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                                </Button>
+                            </div>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                            {remainingBudget < 0 ? `Over budget by RM ${Math.abs(remainingBudget).toFixed(2)}` : `RM ${remainingBudget.toFixed(2)} remaining`}
+                        </p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Recipients</CardTitle>
+                        <CardTitle className="text-sm font-medium">Total Recipients</CardTitle>
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">0</div>
-                        <p className="text-xs text-muted-foreground">Listed for Duit Raya</p>
+                        <div className="text-2xl font-bold">{recipients.length}</div>
+                        <p className="text-xs text-muted-foreground">People in your list</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Bank Status</CardTitle>
+                        <CardTitle className="text-sm font-medium">Allocated</CardTitle>
                         <Activity className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">Unknown</div>
-                        <p className="text-xs text-muted-foreground">Updates from community</p>
+                        <div className="text-2xl font-bold">RM {totalAllocated.toFixed(2)}</div>
+                        <p className="text-xs text-muted-foreground">{percentUsed.toFixed(1)}% of budget</p>
                     </CardContent>
                 </Card>
             </div>
 
-            <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-                <Card className="xl:col-span-2">
-                    <CardHeader>
-                        <CardTitle>Recent Activity</CardTitle>
-                        <CardDescription>
-                            Your recent planning activities will appear here.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex items-center justify-center h-[200px] text-muted-foreground rounded-md border border-dashed">
-                            No recent activity.
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Getting Started</CardTitle>
-                        <CardDescription>
-                            Complete these steps to setup your planner.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid gap-4">
-                        <div className="flex items-center gap-4 rounded-md border p-4">
-                            <div className="flex-1 space-y-1">
-                                <p className="text-sm font-medium leading-none">Set Total Budget</p>
-                                <p className="text-sm text-muted-foreground">Define how much you want to give.</p>
+            <Tabs defaultValue="overview" className="space-y-4">
+                <TabsList>
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="breakdown">Cash Breakdown</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="overview" className="space-y-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Budget Allocation</CardTitle>
+                            <CardDescription>
+                                Visual breakdown of your budget usage.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-8">
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between text-sm">
+                                    <span>Progress</span>
+                                    <span className={percentUsed > 100 ? "text-red-500 font-bold" : "text-muted-foreground"}>
+                                        {percentUsed.toFixed(1)}%
+                                    </span>
+                                </div>
+                                <Progress value={Math.min(percentUsed, 100)} className={getProgressColor(percentUsed)} />
                             </div>
-                        </div>
-                        <div className="flex items-center gap-4 rounded-md border p-4">
-                            <div className="flex-1 space-y-1">
-                                <p className="text-sm font-medium leading-none">Add Recipients</p>
-                                <p className="text-sm text-muted-foreground">List family and friends.</p>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="breakdown">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Smart Cash Breakdown</CardTitle>
+                            <CardDescription>
+                                Exact number of physical notes you need to withdraw.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {breakdown.map((item) => (
+                                    <div
+                                        key={item.value}
+                                        className="flex items-center justify-between p-4 border rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary">
+                                                <Banknote className="w-5 h-5" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-sm font-medium leading-none">{item.label}</p>
+                                                <p className="text-xs text-muted-foreground">Note</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-2xl font-bold font-mono">
+                                            {item.count}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
         </div>
     )
 }

@@ -1,0 +1,16 @@
+export const MALAYSIAN_BANKS = [
+    { name: "Maybank", color: "bg-yellow-500" },
+    { name: "CIMB Bank", color: "bg-red-600" },
+    { name: "Public Bank", color: "bg-red-700" },
+    { name: "RHB Bank", color: "bg-blue-600" },
+    { name: "Hong Leong Bank", color: "bg-blue-700" },
+    { name: "AmBank", color: "bg-red-500" },
+    { name: "Bank Islam", color: "bg-red-800" },
+    { name: "Bank Rakyat", color: "bg-blue-500" },
+    { name: "BSN", color: "bg-teal-600" },
+    { name: "HSBC Bank", color: "bg-red-600" },
+    { name: "OCBC Bank", color: "bg-red-600" },
+    { name: "Standard Chartered", color: "bg-blue-500/50" },
+    { name: "Alliance Bank", color: "bg-blue-400" },
+    { name: "Affin Bank", color: "bg-blue-800" },
+]
