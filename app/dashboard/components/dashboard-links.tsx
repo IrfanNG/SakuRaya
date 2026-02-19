@@ -6,6 +6,7 @@ import {
     Home,
     LineChart,
     Users,
+    PiggyBank,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -24,6 +25,11 @@ const links = [
         href: "/dashboard/bank-status",
         label: "Bank Status",
         icon: LineChart,
+    },
+    {
+        href: "/dashboard/savings",
+        label: "Savings",
+        icon: PiggyBank,
     },
 ]
 

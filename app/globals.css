@@ -96,3 +96,11 @@
     @apply bg-background text-foreground;
   }
 }
+
+@utility glass {
+  @apply backdrop-blur-xl bg-white/20 dark:bg-black/20 border border-white/10 dark:border-white/5;
+}
+
+@utility glass-card {
+  @apply glass rounded-lg shadow-lg;
+}

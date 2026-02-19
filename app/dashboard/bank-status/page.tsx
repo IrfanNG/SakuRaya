@@ -22,6 +22,7 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Search, MapPin, Clock, AlertCircle, CheckCircle2 } from "lucide-react"
 import { MALAYSIAN_BANKS } from "@/lib/banks"
 
@@ -42,6 +43,13 @@ export default function BankStatusPage() {
     const [location, setLocation] = useState("")
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [now, setNow] = useState(new Date()) // Separate state for UI updates
+
+    // Update 'now' every minute to refresh relative times
+    useEffect(() => {
+        const interval = setInterval(() => setNow(new Date()), 60000)
+        return () => clearInterval(interval)
+    }, [])
 
     // Fetch initial data
     const fetchStatuses = async () => {
@@ -109,18 +117,25 @@ export default function BankStatusPage() {
 
         // Since 'id' is the Primary Key and tracks the User ID, we must use UPSERT.
         // This means each user can only have ONE active report at a time (updating a new bank overwrites the old one).
-        const { error } = await supabase.from('bank_status').upsert({
+        const { data, error } = await supabase.from('bank_status').upsert({
             id: user?.id,
             bank_name: selectedBank,
             location: location || "Unknown Location",
             crowd_level: crowdLevelInt,
             created_at: new Date().toISOString() // Update timestamp on change
-        })
+        }).select()
 
-        if (!error) {
+        if (!error && data) {
             setIsDialogOpen(false)
             setLocation("")
-        } else {
+
+            // Instant UI update
+            const newReport = data[0] as BankStatus
+            setStatuses((prev) => {
+                const filtered = prev.filter(item => item.id !== newReport.id)
+                return [newReport, ...filtered]
+            })
+        } else if (error) {
             console.error("Report submission error:", error)
             alert(`Failed to submit report: ${error.message}\n\nHint: ${error.details || 'Check columns'}`)
         }
@@ -158,9 +173,17 @@ export default function BankStatusPage() {
         }
     }
 
-    const isFresh = (dateString: string) => {
-        const diff = new Date().getTime() - new Date(dateString).getTime()
-        return diff < 1000 * 60 * 60 * 2 // 2 hours
+    const getFreshnessInfo = (dateString: string) => {
+        const diffMs = now.getTime() - new Date(dateString).getTime()
+        const diffMins = Math.floor(diffMs / 60000)
+
+        if (diffMins < 30) {
+            return { label: "Active Now", color: "text-emerald-500", dot: true, icon: null }
+        } else if (diffMins < 120) {
+            return { label: `Updated ${diffMins}m ago`, color: "text-blue-500", dot: false, icon: Clock }
+        } else {
+            return { label: "Status Unverified", color: "text-amber-500", dot: false, icon: AlertCircle }
+        }
     }
 
     const filteredBanks = MALAYSIAN_BANKS.filter(bank =>
@@ -186,112 +209,132 @@ export default function BankStatusPage() {
                 </div>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {filteredBanks.map((bank) => {
-                    const latest = getLatestStatus(bank.name)
-                    const fresh = latest ? isFresh(latest.created_at) : false
+            {loading ? (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <div key={i} className="flex flex-col gap-2 p-4 border rounded-lg">
+                            <Skeleton className="h-10 w-10 rounded-lg" />
+                            <Skeleton className="h-6 w-3/4 mt-2" />
+                            <Skeleton className="h-4 w-1/2" />
+                            <div className="flex gap-2 mt-4">
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {filteredBanks.map((bank) => {
+                        const latest = getLatestStatus(bank.name)
+                        const freshness = latest ? getFreshnessInfo(latest.created_at) : null
 
-                    return (
-                        <Card key={bank.name} className="flex flex-col overflow-hidden transition-all hover:border-primary/50">
-                            <CardHeader className="pb-2">
-                                <div className="flex justify-between items-start">
-                                    <div className={`w-10 h-10 rounded-lg ${bank.color} flex items-center justify-center text-white font-bold text-lg`}>
-                                        {bank.name.substring(0, 1)}
-                                    </div>
-                                    {latest && (
-                                        <Badge variant="outline" className={getStatusColor(latest.crowd_level)}>
-                                            {getStatusIcon(latest.crowd_level)}
-                                            {getStatusLabel(latest.crowd_level)}
-                                        </Badge>
-                                    )}
-                                </div>
-                                <CardTitle className="mt-4">{bank.name}</CardTitle>
-                                <CardDescription className="flex items-center gap-1">
-                                    {latest ? (
-                                        <>
-                                            <MapPin className="w-3 h-3" />
-                                            <span className="truncate max-w-[200px]">{latest.location}</span>
-                                        </>
-                                    ) : (
-                                        "No recent reports"
-                                    )}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="pb-2 flex-grow">
-                                {latest ? (
-                                    <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                        <Clock className="w-3 h-3" />
-                                        Updated {new Date(latest.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        {!fresh && <span className="text-amber-500 ml-1">(Unverified)</span>}
-                                    </div>
-                                ) : (
-                                    <p className="text-xs text-muted-foreground">Be the first to report status for this bank.</p>
-                                )}
-                            </CardContent>
-                            <CardFooter>
-                                <Dialog open={isDialogOpen && selectedBank === bank.name} onOpenChange={(open) => {
-                                    setIsDialogOpen(open)
-                                    if (open) setSelectedBank(bank.name)
-                                }}>
-                                    <DialogTrigger asChild>
-                                        <Button variant="outline" className="w-full">Report Status</Button>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                        <DialogHeader>
-                                            <DialogTitle>Report {bank.name} Status</DialogTitle>
-                                            <DialogDescription>
-                                                Help others by reporting the current crowd level.
-                                            </DialogDescription>
-                                        </DialogHeader>
-
-                                        <div className="grid gap-4 py-4">
-                                            <div className="grid gap-2">
-                                                <label htmlFor="location" className="text-sm font-medium">Branch Location</label>
-                                                <Input
-                                                    id="location"
-                                                    placeholder="e.g. KLCC, Bangsar, Seksyen 7"
-                                                    value={location}
-                                                    onChange={(e) => setLocation(e.target.value)}
-                                                />
-                                            </div>
-
-                                            <div className="grid grid-cols-3 gap-2 mt-2">
-                                                <Button
-                                                    variant="outline"
-                                                    className="flex flex-col h-24 gap-2 hover:bg-emerald-500/10 hover:text-emerald-500 hover:border-emerald-500"
-                                                    onClick={() => handleReport('smooth')}
-                                                    disabled={isSubmitting}
-                                                >
-                                                    <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-                                                    Smooth
-                                                </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    className="flex flex-col h-24 gap-2 hover:bg-amber-500/10 hover:text-amber-500 hover:border-amber-500"
-                                                    onClick={() => handleReport('moderate')}
-                                                    disabled={isSubmitting}
-                                                >
-                                                    <Clock className="w-8 h-8 text-amber-500" />
-                                                    Moderate
-                                                </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    className="flex flex-col h-24 gap-2 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500"
-                                                    onClick={() => handleReport('packed')}
-                                                    disabled={isSubmitting}
-                                                >
-                                                    <AlertCircle className="w-8 h-8 text-red-500" />
-                                                    Packed
-                                                </Button>
-                                            </div>
+                        return (
+                            <Card key={bank.name} className="flex flex-col overflow-hidden transition-all hover:border-primary/50">
+                                <CardHeader className="pb-2">
+                                    <div className="flex justify-between items-start">
+                                        <div className={`w-10 h-10 rounded-lg ${bank.color} flex items-center justify-center text-white font-bold text-lg`}>
+                                            {bank.name.substring(0, 1)}
                                         </div>
-                                    </DialogContent>
-                                </Dialog>
-                            </CardFooter>
-                        </Card>
-                    )
-                })}
-            </div>
+                                        {latest && (
+                                            <Badge variant="outline" className={getStatusColor(latest.crowd_level)}>
+                                                {getStatusIcon(latest.crowd_level)}
+                                                {getStatusLabel(latest.crowd_level)}
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    <CardTitle className="mt-4">{bank.name}</CardTitle>
+                                    <CardDescription className="flex items-center gap-1">
+                                        {latest ? (
+                                            <>
+                                                <MapPin className="w-3 h-3" />
+                                                <span className="truncate max-w-[200px]">{latest.location}</span>
+                                            </>
+                                        ) : (
+                                            "No recent reports"
+                                        )}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="pb-2 flex-grow">
+                                    {latest && freshness ? (
+                                        <div className={`text-xs flex items-center gap-1.5 font-medium ${freshness.color}`}>
+                                            {freshness.dot && (
+                                                <span className="relative flex h-2 w-2">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                                </span>
+                                            )}
+                                            {freshness.icon && <freshness.icon className="w-3 h-3" />}
+                                            {freshness.label}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground">Be the first to report status for this bank.</p>
+                                    )}
+                                </CardContent>
+                                <CardFooter>
+                                    <Dialog open={isDialogOpen && selectedBank === bank.name} onOpenChange={(open) => {
+                                        setIsDialogOpen(open)
+                                        if (open) setSelectedBank(bank.name)
+                                    }}>
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline" className="w-full">Report Status</Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Report {bank.name} Status</DialogTitle>
+                                                <DialogDescription>
+                                                    Help others by reporting the current crowd level.
+                                                </DialogDescription>
+                                            </DialogHeader>
+
+                                            <div className="grid gap-4 py-4">
+                                                <div className="grid gap-2">
+                                                    <label htmlFor="location" className="text-sm font-medium">Branch Location</label>
+                                                    <Input
+                                                        id="location"
+                                                        placeholder="e.g. KLCC, Bangsar, Seksyen 7"
+                                                        value={location}
+                                                        onChange={(e) => setLocation(e.target.value)}
+                                                    />
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        className="flex flex-col h-24 gap-2 hover:bg-emerald-500/10 hover:text-emerald-500 hover:border-emerald-500"
+                                                        onClick={() => handleReport('smooth')}
+                                                        disabled={isSubmitting}
+                                                    >
+                                                        <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                                                        Smooth
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        className="flex flex-col h-24 gap-2 hover:bg-amber-500/10 hover:text-amber-500 hover:border-amber-500"
+                                                        onClick={() => handleReport('moderate')}
+                                                        disabled={isSubmitting}
+                                                    >
+                                                        <Clock className="w-8 h-8 text-amber-500" />
+                                                        Moderate
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        className="flex flex-col h-24 gap-2 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500"
+                                                        onClick={() => handleReport('packed')}
+                                                        disabled={isSubmitting}
+                                                    >
+                                                        <AlertCircle className="w-8 h-8 text-red-500" />
+                                                        Packed
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
+                                </CardFooter>
+                            </Card>
+                        )
+                    })}
+                </div>
+            )}
         </div>
     )
 }

@@ -29,6 +29,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Trash2, Plus, Users, Wallet } from 'lucide-react'
 
 type Recipient = {
@@ -136,7 +137,7 @@ export default function RecipientsPage() {
     }
 
     return (
-        <div className="flex flex-col gap-6 h-full">
+        <div className="flex flex-col gap-6 h-full animate-in fade-in duration-500">
             {/* Summary Card */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
@@ -145,8 +146,17 @@ export default function RecipientsPage() {
                         <Wallet className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">RM {totalAmount.toFixed(2)}</div>
-                        <p className="text-xs text-muted-foreground">For all recycled recipients</p>
+                        {loading ? (
+                            <div className="space-y-2">
+                                <Skeleton className="h-8 w-24" />
+                                <Skeleton className="h-4 w-32" />
+                            </div>
+                        ) : (
+                            <>
+                                <div className="text-2xl font-bold">RM {totalAmount.toFixed(2)}</div>
+                                <p className="text-xs text-muted-foreground">For all recipients</p>
+                            </>
+                        )}
                     </CardContent>
                 </Card>
                 <Card>
@@ -155,8 +165,17 @@ export default function RecipientsPage() {
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{totalCount}</div>
-                        <p className="text-xs text-muted-foreground">People in your list</p>
+                        {loading ? (
+                            <div className="space-y-2">
+                                <Skeleton className="h-8 w-12" />
+                                <Skeleton className="h-4 w-24" />
+                            </div>
+                        ) : (
+                            <>
+                                <div className="text-2xl font-bold">{totalCount}</div>
+                                <p className="text-xs text-muted-foreground">People in your list</p>
+                            </>
+                        )}
                     </CardContent>
                 </Card>
             </div>
@@ -223,28 +242,37 @@ export default function RecipientsPage() {
                             <CardDescription>Manage who you are giving Duit Raya to.</CardDescription>
                         </CardHeader>
                         <CardContent className="flex-1">
-                            {loading ? (
-                                <div className="flex items-center justify-center h-40 text-muted-foreground">
-                                    Loading...
-                                </div>
-                            ) : recipients.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-40 text-muted-foreground border-2 border-dashed rounded-lg">
-                                    <Users className="h-8 w-8 mb-2 opacity-20" />
-                                    <p>No recipients yet. Add one to get started!</p>
-                                </div>
-                            ) : (
-                                <div className="rounded-md border">
-                                    <Table>
-                                        <TableHeader>
+                            <div className="rounded-md border">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Name</TableHead>
+                                            <TableHead>Category</TableHead>
+                                            <TableHead className="text-right">Amount (RM)</TableHead>
+                                            <TableHead className="w-[50px]"></TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {loading ? (
+                                            [1, 2, 3, 4, 5].map((i) => (
+                                                <TableRow key={i}>
+                                                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                                                    <TableCell className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
+                                                    <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : recipients.length === 0 ? (
                                             <TableRow>
-                                                <TableHead>Name</TableHead>
-                                                <TableHead>Category</TableHead>
-                                                <TableHead className="text-right">Amount (RM)</TableHead>
-                                                <TableHead className="w-[50px]"></TableHead>
+                                                <TableCell colSpan={4} className="h-40 text-center">
+                                                    <div className="flex flex-col items-center justify-center text-muted-foreground">
+                                                        <Users className="h-8 w-8 mb-2 opacity-20" />
+                                                        <p>No recipients yet. Add one to get started!</p>
+                                                    </div>
+                                                </TableCell>
                                             </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {recipients.map((recipient) => (
+                                        ) : (
+                                            recipients.map((recipient) => (
                                                 <TableRow key={recipient.id}>
                                                     <TableCell className="font-medium">{recipient.name}</TableCell>
                                                     <TableCell>
@@ -267,11 +295,11 @@ export default function RecipientsPage() {
                                                         </Button>
                                                     </TableCell>
                                                 </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            )}
+                                            ))
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>
