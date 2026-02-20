@@ -106,19 +106,32 @@ export default function DashboardPage() {
         if (!breakdownRef.current) return
 
         try {
+            // Small delay to ensure styles are fully applied
+            await new Promise(resolve => setTimeout(resolve, 100))
+
             const canvas = await html2canvas(breakdownRef.current, {
                 backgroundColor: "#09090b", // Dark mode bg
-                scale: 2
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                onclone: (clonedDoc) => {
+                    // Ensure the cloned node is visible and styled correctly if needed
+                    const element = clonedDoc.getElementById('breakdown-container')
+                    if (element) {
+                        element.style.padding = '20px'
+                    }
+                }
             })
 
             const image = canvas.toDataURL("image/png")
             const link = document.createElement("a")
             link.href = image
-            link.download = "SakuRaya_Breakdown.png"
+            link.download = `SakuRaya_Breakdown_${new Date().toISOString().split('T')[0]}.png`
             link.click()
         } catch (err) {
-            console.error("Export failed", err)
-            alert("Failed to export image. Please try again.")
+            console.error("Export failed:", err)
+            // Show a more user-friendly error
+            alert("Failed to export image. Try taking a screenshot instead if this persists.")
         }
     }
 
@@ -272,7 +285,7 @@ export default function DashboardPage() {
                             </Button>
                         </CardHeader>
                         <CardContent>
-                            <div ref={breakdownRef} className="p-4 bg-card rounded-lg border border-border/50">
+                            <div ref={breakdownRef} id="breakdown-container" className="p-4 bg-card rounded-lg border border-border/50">
                                 {/* Inner padding for clean screenshot */}
                                 {loading ? (
                                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
