@@ -104,3 +104,25 @@
 @utility glass-card {
   @apply glass rounded-lg shadow-lg;
 }
+
+@utility ambient-border {
+  position: relative;
+  background-clip: padding-box;
+  border: 1px solid transparent;
+}
+
+.ambient-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  background: conic-gradient(from 90deg at 50% 50%, #00000000 0%, #00000000 50%, #ec4899 75%, #8b5cf6 100%);
+  animation: ambient-spin 4s linear infinite;
+  opacity: 0.3;
+}
+
+@keyframes ambient-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

@@ -17,6 +17,21 @@ import {
 } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Label } from '@/components/ui/label'
+import { PageTransition } from '@/components/page-transition'
+import { motion } from 'framer-motion'
+
+const formContainer = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: { staggerChildren: 0.08 }
+    }
+}
+
+const formItem = {
+    hidden: { opacity: 0, y: 15 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.3 } }
+}
 
 export default function LoginPage() {
     const router = useRouter()
@@ -75,8 +90,8 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-background">
-            <Card className="w-[400px]">
+        <PageTransition className="flex items-center justify-center min-h-screen bg-background">
+            <Card className="w-[400px] ambient-border bg-card">
                 <CardHeader className="text-center">
                     <CardTitle>Welcome to SakuRaya</CardTitle>
                     <CardDescription>
@@ -90,8 +105,8 @@ export default function LoginPage() {
                             <TabsTrigger value="register">Sign Up</TabsTrigger>
                         </TabsList>
                         <TabsContent value="login">
-                            <form onSubmit={handleLogin} className="space-y-4 pt-4">
-                                <div className="space-y-2">
+                            <motion.form variants={formContainer} initial="hidden" animate="show" onSubmit={handleLogin} className="space-y-4 pt-4">
+                                <motion.div variants={formItem} className="space-y-2">
                                     <Label htmlFor="email">Email</Label>
                                     <Input
                                         id="email"
@@ -101,8 +116,8 @@ export default function LoginPage() {
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
                                     />
-                                </div>
-                                <div className="space-y-2">
+                                </motion.div>
+                                <motion.div variants={formItem} className="space-y-2">
                                     <Label htmlFor="password">Password</Label>
                                     <Input
                                         id="password"
@@ -111,16 +126,18 @@ export default function LoginPage() {
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
                                     />
-                                </div>
-                                {error && <p className="text-sm text-red-500">{error}</p>}
-                                <Button type="submit" className="w-full" disabled={loading}>
-                                    {loading ? 'Logging in...' : 'Login'}
-                                </Button>
-                            </form>
+                                </motion.div>
+                                {error && <motion.p variants={formItem} className="text-sm text-red-500">{error}</motion.p>}
+                                <motion.div variants={formItem}>
+                                    <Button type="submit" className="w-full" disabled={loading}>
+                                        {loading ? 'Logging in...' : 'Login'}
+                                    </Button>
+                                </motion.div>
+                            </motion.form>
                         </TabsContent>
                         <TabsContent value="register">
-                            <form onSubmit={handleSignUp} className="space-y-4 pt-4">
-                                <div className="space-y-2">
+                            <motion.form variants={formContainer} initial="hidden" animate="show" onSubmit={handleSignUp} className="space-y-4 pt-4">
+                                <motion.div variants={formItem} className="space-y-2">
                                     <Label htmlFor="email">Email</Label>
                                     <Input
                                         id="email"
@@ -130,8 +147,8 @@ export default function LoginPage() {
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
                                     />
-                                </div>
-                                <div className="space-y-2">
+                                </motion.div>
+                                <motion.div variants={formItem} className="space-y-2">
                                     <Label htmlFor="password">Password</Label>
                                     <Input
                                         id="password"
@@ -140,12 +157,14 @@ export default function LoginPage() {
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
                                     />
-                                </div>
-                                {error && <p className="text-sm text-red-500">{error}</p>}
-                                <Button type="submit" className="w-full" disabled={loading}>
-                                    {loading ? 'Creating Account...' : 'Sign Up'}
-                                </Button>
-                            </form>
+                                </motion.div>
+                                {error && <motion.p variants={formItem} className="text-sm text-red-500">{error}</motion.p>}
+                                <motion.div variants={formItem}>
+                                    <Button type="submit" className="w-full" disabled={loading}>
+                                        {loading ? 'Creating Account...' : 'Sign Up'}
+                                    </Button>
+                                </motion.div>
+                            </motion.form>
                         </TabsContent>
                     </Tabs>
 
@@ -174,6 +193,6 @@ export default function LoginPage() {
                     </Link>
                 </CardFooter>
             </Card>
-        </div>
+        </PageTransition>
     )
 }
