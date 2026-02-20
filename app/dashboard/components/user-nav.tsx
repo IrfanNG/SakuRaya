@@ -3,6 +3,7 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -50,9 +51,9 @@ export function UserNav() {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem disabled>Profile</DropdownMenuItem>
+                    <DropdownMenuLabel>
+                        <Link href="/dashboard/profile" className="flex w-full items-center">My Account</Link>
+                    </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setShowLogoutDialog(true)}>
                         <LogOut className="mr-2 h-4 w-4" />

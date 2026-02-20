@@ -127,7 +127,11 @@ export default function LoginPage() {
                                         required
                                     />
                                 </motion.div>
-                                {error && <motion.p variants={formItem} className="text-sm text-red-500">{error}</motion.p>}
+                                {error && (
+                                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-sm font-medium text-destructive bg-destructive/10 p-3 rounded-md border border-destructive/20">
+                                        {error}
+                                    </motion.div>
+                                )}
                                 <motion.div variants={formItem}>
                                     <Button type="submit" className="w-full" disabled={loading}>
                                         {loading ? 'Logging in...' : 'Login'}
@@ -158,7 +162,11 @@ export default function LoginPage() {
                                         required
                                     />
                                 </motion.div>
-                                {error && <motion.p variants={formItem} className="text-sm text-red-500">{error}</motion.p>}
+                                {error && (
+                                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-sm font-medium text-destructive bg-destructive/10 p-3 rounded-md border border-destructive/20">
+                                        {error}
+                                    </motion.div>
+                                )}
                                 <motion.div variants={formItem}>
                                     <Button type="submit" className="w-full" disabled={loading}>
                                         {loading ? 'Creating Account...' : 'Sign Up'}

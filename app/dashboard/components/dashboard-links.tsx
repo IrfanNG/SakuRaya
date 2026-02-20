@@ -7,6 +7,7 @@ import {
     LineChart,
     Users,
     PiggyBank,
+    CircleUser,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -30,6 +31,11 @@ const links = [
         href: "/dashboard/savings",
         label: "Savings",
         icon: PiggyBank,
+    },
+    {
+        href: "/dashboard/profile",
+        label: "Profile",
+        icon: CircleUser,
     },
 ]
 
