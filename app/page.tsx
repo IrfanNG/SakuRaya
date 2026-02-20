@@ -57,15 +57,22 @@ export default function LandingPage() {
                   Get Started <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Button variant="outline" size="lg" className="h-12 px-8 text-base border-white/10 hover:bg-white/5 disabled:opacity-50">
+              <Button
+                variant="outline"
+                size="lg"
+                className="h-12 px-8 text-base border-white/10 hover:bg-white/5 transition-colors"
+                onClick={() => {
+                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })
+                }}
+              >
                 Learn More
               </Button>
             </div>
           </section>
 
-          <section className="container mx-auto px-4 md:px-6 py-12 lg:py-24">
+          <section id="features" className="container mx-auto px-4 md:px-6 py-12 lg:py-24">
             <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-100px" }} className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              <motion.div variants={item} className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-8 transition-all hover:bg-white/10 hover:border-white/20">
+              <motion.div variants={item} className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-violet-500/10 hover:bg-white/10 hover:border-white/20">
                 <div className="mb-4 inline-block rounded-lg bg-pink-500/10 p-3 text-pink-500">
                   <Wallet className="h-6 w-6" />
                 </div>
@@ -75,7 +82,7 @@ export default function LandingPage() {
                   Visual tracking ensures you never overspend.
                 </p>
               </motion.div>
-              <motion.div variants={item} className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-8 transition-all hover:bg-white/10 hover:border-white/20">
+              <motion.div variants={item} className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-violet-500/10 hover:bg-white/10 hover:border-white/20">
                 <div className="mb-4 inline-block rounded-lg bg-violet-500/10 p-3 text-violet-500">
                   <Users className="h-6 w-6" />
                 </div>
@@ -85,7 +92,7 @@ export default function LandingPage() {
                   Keep track of who has received their Duit Raya.
                 </p>
               </motion.div>
-              <motion.div variants={item} className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-8 transition-all hover:bg-white/10 hover:border-white/20">
+              <motion.div variants={item} className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-violet-500/10 hover:bg-white/10 hover:border-white/20">
                 <div className="mb-4 inline-block rounded-lg bg-emerald-500/10 p-3 text-emerald-500">
                   <BarChart3 className="h-6 w-6" />
                 </div>
