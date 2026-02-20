@@ -141,8 +141,7 @@ export default function DashboardPage() {
             // Items
             doc.setFont("helvetica", "normal")
             breakdown.forEach((item) => {
-                const noteValue = parseInt(item.label.replace("RM ", ""))
-                const totalValue = noteValue * item.count
+                const totalValue = item.value * item.count
 
                 doc.text(item.label, 30, y)
                 doc.text(item.count.toString(), 100, y)
