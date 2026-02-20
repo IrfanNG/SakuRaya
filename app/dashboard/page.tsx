@@ -14,7 +14,7 @@ import { Progress } from "@/components/ui/progress"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { DollarSign, Users, Activity, Save, Banknote, Download } from "lucide-react"
+import { DollarSign, Users, Activity, Save, Banknote, Download, Loader2 } from "lucide-react"
 import { calculateTotalBreakdown, type CashDenomination } from "@/lib/cash-breakdown"
 import html2canvas from "html2canvas"
 
@@ -32,6 +32,7 @@ export default function DashboardPage() {
     const [budgetInput, setBudgetInput] = useState("")
     const [breakdown, setBreakdown] = useState<CashDenomination[]>([])
     const [isEditingBudget, setIsEditingBudget] = useState(false)
+    const [exporting, setExporting] = useState(false)
     const breakdownRef = useRef<HTMLDivElement>(null)
 
     const fetchData = async () => {
@@ -104,34 +105,54 @@ export default function DashboardPage() {
 
     const handleExportBreakdown = async () => {
         if (!breakdownRef.current) return
+        setExporting(true)
 
         try {
-            // Small delay to ensure styles are fully applied
-            await new Promise(resolve => setTimeout(resolve, 100))
+            // Create a clone to render off-screen with fixed width (desktop-like layout)
+            const node = breakdownRef.current
+            const clone = node.cloneNode(true) as HTMLElement
 
-            const canvas = await html2canvas(breakdownRef.current, {
-                backgroundColor: "#09090b", // Dark mode bg
-                scale: 2,
+            // Style the clone for capture
+            clone.style.padding = '32px'
+            clone.style.width = '800px' // Force desktop width
+            clone.style.position = 'fixed'
+            clone.style.top = '-9999px'
+            clone.style.left = '-9999px'
+            clone.style.zIndex = '-9999'
+            clone.style.background = '#09090b' // Hardcode dark bg
+            clone.style.color = '#ffffff' // Hardcode text color
+
+            // Append to body locally to capture
+            document.body.appendChild(clone)
+
+            // Wait for images/fonts (if any)
+            await new Promise(resolve => setTimeout(resolve, 500))
+
+            const canvas = await html2canvas(clone, {
+                backgroundColor: "#09090b",
+                scale: 2, // High resolution
                 useCORS: true,
                 logging: false,
-                onclone: (clonedDoc) => {
-                    // Ensure the cloned node is visible and styled correctly if needed
-                    const element = clonedDoc.getElementById('breakdown-container')
-                    if (element) {
-                        element.style.padding = '20px'
-                    }
-                }
+                windowWidth: 800,
+                windowHeight: clone.scrollHeight + 64 // height + padding
             })
 
+            // Clean up
+            document.body.removeChild(clone)
+
+            // Trigger download
             const image = canvas.toDataURL("image/png")
             const link = document.createElement("a")
             link.href = image
             link.download = `SakuRaya_Breakdown_${new Date().toISOString().split('T')[0]}.png`
+            document.body.appendChild(link)
             link.click()
+            document.body.removeChild(link)
         } catch (err) {
             console.error("Export failed:", err)
-            // Show a more user-friendly error
-            alert("Failed to export image. Try taking a screenshot instead if this persists.")
+            alert("Failed to export image. Please try taking a screenshot instead.")
+        } finally {
+            setExporting(false)
         }
     }
 
@@ -279,9 +300,9 @@ export default function DashboardPage() {
                                     Exact number of physical notes you need to withdraw.
                                 </CardDescription>
                             </div>
-                            <Button variant="outline" size="sm" onClick={handleExportBreakdown}>
-                                <Download className="w-4 h-4 mr-2" />
-                                Export Image
+                            <Button variant="outline" size="sm" onClick={handleExportBreakdown} disabled={exporting}>
+                                {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+                                {exporting ? "Exporting..." : "Export Image"}
                             </Button>
                         </CardHeader>
                         <CardContent>
