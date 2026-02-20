@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+SakuRaya
+"Plan your Barakah, skip the bank queue."
 
-## Getting Started
+SakuRaya is a minimalist, tech-themed personal finance planner designed specifically for the Malaysian Muslim community during the Ramadan and Raya season. Built during the GodamSahur Hackathon 2026, it solves the yearly stress of budgeting for "Duit Raya," calculating physical banknote requirements, and navigating bank congestion.
 
-First, run the development server:
+Key Features
+Smart Cash Breakdown: Automatically calculates the exact number of RM1, RM5, RM10, RM20, RM50, and RM100 notes you need to withdraw based on your recipient list.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Real-time Bank Tracker: A crowdsourced "Waze-like" feature for banks. Users report live crowd levels (Smooth, Moderate, Packed) using Supabase Realtime to help others avoid long queues.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Recipient Management: A clean, organized CRUD system to manage family, relatives, and friends with categorized budget allocations.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Savings Roadmap: A "Road to Raya" tracker to help users save consistently throughout the year, ensuring the app remains useful beyond the festive season.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Security First: Implemented PostgreSQL Row Level Security (RLS) to ensure all personal financial data is strictly private and accessible only to the owner.
 
-## Learn More
+Tech Stack
+Framework: Next.js 15+ (App Router)
 
-To learn more about Next.js, take a look at the following resources:
+Styling: Tailwind CSS + Shadcn/UI
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Database & Auth: Supabase (PostgreSQL, Realtime, Google Auth)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Icons: Lucide React
 
-## Deploy on Vercel
+Deployment: Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Database Schema
+SakuRaya uses a relational database structure designed for scalability:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+profiles: User meta-data and total budget goals.
+
+recipients: Individual gift allocations linked to user IDs.
+
+bank_status: Real-time crowdsourced reports with automated expiry logic for data freshness.
