@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# tunnel
+tunnel*.log
+tunnel_*.txt
+start-tunnel.*
+proxy.ts

@@ -5,6 +5,7 @@ const nextConfig = {
     "192.168.0.218:3000",
     "172.25.32.1",
     "172.25.32.1:3000",
+    "junction-unions-loving-timing.trycloudflare.com",
   ],
 };
 
