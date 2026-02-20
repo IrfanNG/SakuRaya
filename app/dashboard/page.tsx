@@ -14,9 +14,9 @@ import { Progress } from "@/components/ui/progress"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { DollarSign, Users, Activity, Save, Banknote, Download, Loader2 } from "lucide-react"
+import { DollarSign, Users, Activity, Save, Banknote, FileText, Loader2 } from "lucide-react"
 import { calculateTotalBreakdown, type CashDenomination } from "@/lib/cash-breakdown"
-import html2canvas from "html2canvas"
+import jsPDF from "jspdf"
 
 type Recipient = {
     id: string
@@ -108,49 +108,61 @@ export default function DashboardPage() {
         setExporting(true)
 
         try {
-            // Create a clone to render off-screen with fixed width (desktop-like layout)
-            const node = breakdownRef.current
-            const clone = node.cloneNode(true) as HTMLElement
+            const doc = new jsPDF()
+            const pageWidth = doc.internal.pageSize.getWidth()
 
-            // Style the clone for capture
-            clone.style.padding = '32px'
-            clone.style.width = '800px' // Force desktop width
-            clone.style.position = 'fixed'
-            clone.style.top = '-9999px'
-            clone.style.left = '-9999px'
-            clone.style.zIndex = '-9999'
-            clone.style.background = '#09090b' // Hardcode dark bg
-            clone.style.color = '#ffffff' // Hardcode text color
+            // Title
+            doc.setFontSize(22)
+            doc.setTextColor(40, 40, 40)
+            doc.text("SakuRaya Cash Breakdown", pageWidth / 2, 20, { align: "center" })
 
-            // Append to body locally to capture
-            document.body.appendChild(clone)
+            // Date
+            doc.setFontSize(12)
+            doc.setTextColor(100, 100, 100)
+            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, 30, { align: "center" })
 
-            // Wait for images/fonts (if any)
-            await new Promise(resolve => setTimeout(resolve, 500))
+            // Separator
+            doc.setLineWidth(0.5)
+            doc.setDrawColor(200, 200, 200)
+            doc.line(20, 35, pageWidth - 20, 35)
 
-            const canvas = await html2canvas(clone, {
-                backgroundColor: "#09090b",
-                scale: 2, // High resolution
-                useCORS: true,
-                logging: false,
-                windowWidth: 800,
-                windowHeight: clone.scrollHeight + 64 // height + padding
+            // Content
+            let y = 50
+            doc.setFontSize(14)
+            doc.setTextColor(0, 0, 0)
+
+            // Table Header
+            doc.setFont("helvetica", "bold")
+            doc.text("Note", 30, y)
+            doc.text("Count", 100, y)
+            doc.text("Value", 160, y)
+            y += 10
+
+            // Items
+            doc.setFont("helvetica", "normal")
+            breakdown.forEach((item) => {
+                const noteValue = parseInt(item.label.replace("RM ", ""))
+                const totalValue = noteValue * item.count
+
+                doc.text(item.label, 30, y)
+                doc.text(item.count.toString(), 100, y)
+                doc.text(`RM ${totalValue}`, 160, y)
+                y += 10
             })
 
-            // Clean up
-            document.body.removeChild(clone)
+            // Total Summary
+            y += 10
+            doc.line(20, y, pageWidth - 20, y)
+            y += 15
+            doc.setFont("helvetica", "bold")
+            doc.text(`Total Withdrawal Required: RM ${totalAllocated.toFixed(2)}`, pageWidth / 2, y, { align: "center" })
 
-            // Trigger download
-            const image = canvas.toDataURL("image/png")
-            const link = document.createElement("a")
-            link.href = image
-            link.download = `SakuRaya_Breakdown_${new Date().toISOString().split('T')[0]}.png`
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
+            // Save
+            doc.save(`SakuRaya_Breakdown_${new Date().toISOString().split('T')[0]}.pdf`)
+
         } catch (err) {
-            console.error("Export failed:", err)
-            alert("Failed to export image. Please try taking a screenshot instead.")
+            console.error("PDF Export failed:", err)
+            alert("Failed to generate PDF. Please try again.")
         } finally {
             setExporting(false)
         }
@@ -301,8 +313,8 @@ export default function DashboardPage() {
                                 </CardDescription>
                             </div>
                             <Button variant="outline" size="sm" onClick={handleExportBreakdown} disabled={exporting}>
-                                {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-                                {exporting ? "Exporting..." : "Export Image"}
+                                {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+                                {exporting ? "Generating..." : "Export PDF"}
                             </Button>
                         </CardHeader>
                         <CardContent>
