@@ -7,7 +7,7 @@ import { Toaster } from '@/components/ui/sonner'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://sakuraya.vercel.app'),
+  metadataBase: new URL('https://saku-raya.vercel.app'),
   title: {
     default: 'SakuRaya - Minimalist Duit Raya Planner',
     template: '%s | SakuRaya',
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_MY',
-    url: 'https://sakuraya.vercel.app',
+    url: 'https://saku-raya.vercel.app',
     title: 'SakuRaya - Minimalist Duit Raya Planner',
     description: 'Plan your barakah, skip the bank queue. The minimalist Duit Raya & Gifting Planner.',
     siteName: 'SakuRaya',
