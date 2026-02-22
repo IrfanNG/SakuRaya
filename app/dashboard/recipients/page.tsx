@@ -31,6 +31,8 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Trash2, Plus, Users, Wallet } from 'lucide-react'
+import { toast } from 'sonner'
+import { EmptyState } from '@/components/empty-state'
 
 type Recipient = {
     id: string
@@ -111,6 +113,7 @@ export default function RecipientsPage() {
             setName('')
             setAmount('')
             setCategory('Family') // Reset to default
+            toast.success("Recipient added successfully!")
         }
         setAdding(false)
     }
@@ -120,6 +123,7 @@ export default function RecipientsPage() {
         if (!error) {
             // Updated to use functional update to avoid stale state
             setRecipients((prev) => prev.filter(r => r.id !== id))
+            toast.success("Recipient removed.")
         }
     }
 
@@ -264,11 +268,14 @@ export default function RecipientsPage() {
                                             ))
                                         ) : recipients.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={4} className="h-40 text-center">
-                                                    <div className="flex flex-col items-center justify-center text-muted-foreground">
-                                                        <Users className="h-8 w-8 mb-2 opacity-20" />
-                                                        <p>No recipients yet. Add one to get started!</p>
-                                                    </div>
+                                                <TableCell colSpan={4} className="h-[400px]">
+                                                    <EmptyState
+                                                        icon={Users}
+                                                        title="No recipients yet"
+                                                        description="Start planning your barakah! Add your first recipient to see them here."
+                                                        actionLabel="Add First Recipient"
+                                                        onAction={() => document.getElementById('name')?.focus()}
+                                                    />
                                                 </TableCell>
                                             </TableRow>
                                         ) : (

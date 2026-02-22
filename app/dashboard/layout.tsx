@@ -10,6 +10,7 @@ import {
 import { MobileNav } from "@/app/dashboard/components/mobile-nav"
 import { UserNav } from "@/app/dashboard/components/user-nav"
 import { DashboardLinks } from "@/app/dashboard/components/dashboard-links"
+import { ModeToggle } from "@/components/mode-toggle"
 
 export default function DashboardLayout({
     children,
@@ -37,6 +38,7 @@ export default function DashboardLayout({
                     <div className="w-full flex-1">
                         {/* Search/Breadcrumb placeholder */}
                     </div>
+                    <ModeToggle />
                     <UserNav />
                 </header>
                 <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">

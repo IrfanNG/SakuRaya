@@ -24,6 +24,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Search, MapPin, Clock, AlertCircle, CheckCircle2 } from "lucide-react"
+import { toast } from "sonner"
 import { MALAYSIAN_BANKS } from "@/lib/banks"
 
 type BankStatus = {
@@ -135,6 +136,7 @@ export default function BankStatusPage() {
                 const filtered = prev.filter(item => item.id !== newReport.id)
                 return [newReport, ...filtered]
             })
+            toast.success("Thank you for your report!")
         } else if (error) {
             console.error("Report submission error:", error)
             alert(`Failed to submit report: ${error.message}\n\nHint: ${error.details || 'Check columns'}`)
