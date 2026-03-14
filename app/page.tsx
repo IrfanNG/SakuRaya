@@ -109,7 +109,7 @@ export default function LandingPage() {
       <footer className="border-t border-white/5 py-6 md:py-0">
         <div className="container mx-auto flex flex-col items-center justify-center gap-4 md:h-24 md:flex-row">
           <p className="text-center text-sm leading-loose text-muted-foreground">
-            Built for GodamSahur Hackathon. © 2024 SakuRaya.
+            Built for GodamSahur Hackathon. © 2026 SakuRaya.
           </p>
         </div>
       </footer>
