@@ -30,9 +30,15 @@ export async function updateSession(request: NextRequest) {
         }
     );
 
+    // Add a race condition to prevent the app from hanging if Supabase is down/blocked
     const {
         data: { user },
-    } = await supabase.auth.getUser();
+    } = await Promise.race([
+        supabase.auth.getUser(),
+        new Promise<{ data: { user: null }, error: any }>((_, reject) =>
+            setTimeout(() => reject(new Error("Timeout")), 3000)
+        ).catch(() => ({ data: { user: null }, error: null }))
+    ]);
 
     // Project-specific logic: protect /dashboard
     if (
